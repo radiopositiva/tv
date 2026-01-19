@@ -1,1344 +1,436 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Canais</title>
+    <title>Player de Canais</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; }
-        header { background-color: #007bff; padding: 15px; text-align: center; }
-        header a { color: #fff; text-decoration: none; margin: 0 10px; font-weight: bold; }
-        header a:hover { text-decoration: underline; }
-        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
-        .category { margin: 20px 0; }
-        .category h2 { text-align: center; color: #007bff; margin-bottom: 10px; }
-        .card { width: 100px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); overflow: hidden; text-align: center; }
-        .card img { width: 80%; height: 120px; object-fit: contain; }
-        .card h3 { font-size: 1em; margin: 10px 0; }
-        .card p { color: #555; font-size: 0.9em; }
-        .card a { display: block; margin: 10px; padding: 8px; text-decoration: none; color: #fff; background-color: #007bff; border-radius: 5px; font-size: 0.9em; }
-        .card a:hover { background-color: #0056b3; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        .header {
+            background-color: #2c3e50;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #e74c3c;
+        }
+        .header h1 {
+            margin: 0;
+            color: #ecf0f1;
+        }
+        .container {
+            display: flex;
+            max-width: 1500px;
+            margin: 20px auto;
+            padding: 10px;
+            gap: 20px;
+        }
+        .player-area {
+            flex: 3;
+            min-width: 0;
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
+        }
+        .channel-list-area {
+            flex: 1;
+            max-width: 350px;
+            background-color: #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            display: flex; /* Adicionado */
+            flex-direction: column; /* Adicionado */
+            max-height: 85vh;
+            border: 1px solid #333;
+        }
+        .channel-list-area h2 {
+            color: #e74c3c;
+            margin-top: 0;
+            border-bottom: 2px solid #34495e;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Estilo para a barra de busca */
+        #channel-search {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #34495e;
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #3e566e;
+            color: #f0f0f0;
+            font-size: 16px;
+        }
+        #channel-search::placeholder {
+            color: #bdc3c7;
+        }
+
+        /* Área de Rolagem para a Lista */
+        #channel-list-scroll {
+            overflow-y: auto;
+            flex-grow: 1; /* Permite que a lista use o espaço restante */
+            padding-right: 5px; /* Espaço para a barra de rolagem */
+        }
+        
+        /* Estilo para a Categoria */
+        .category-title {
+            color: #f1c40f;
+            font-size: 1.1em;
+            margin: 15px 0 8px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #4e6377;
+            text-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+        }
+
+        .channel-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background-color: #34495e;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 5px;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .channel-button:hover {
+            background-color: #3e566e;
+        }
+        .channel-button.active {
+            background-color: #e74c3c;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        .player-iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+            border: none;
+        }
+        #current-channel-name {
+            padding: 15px;
+            background-color: #34495e;
+            margin: 0;
+            text-align: center;
+            font-size: 1.2em;
+            color: #f1c40f;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                margin: 10px;
+            }
+            .channel-list-area {
+                max-height: 40vh;
+                max-width: 100%;
+            }
+            .player-iframe {
+                min-height: 300px;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <a href="#Entretenimento">Entretenimento</a><a href="#Globo">Globo</a><a href="#Canais Abertos">Canais Abertos</a><a href="#Noticias">Noticias</a><a href="#Esportes">Esportes</a><a href="#Radio">Radio</a>
-    </header>
-</div></div><div class="category" id="Globo"><h2>Globo</h2><div class="container">
-                <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/thumb/9/9e/Logotipo_da_TV_Globo.png/512px-Logotipo_da_TV_Globo.png" alt="Rio de Janeiro (Globo Rio)">
-            <h3>Rio de Janeiro (Globo Rio)</h3>
-            <p>Globo</p>
-            <a href="https://reidoscanais.me/embed/?id=globorj-globorio" target="_blank">Assistir</a>
-        </div>
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/thumb/9/9e/Logotipo_da_TV_Globo.png/512px-Logotipo_da_TV_Globo.png" alt="Rio de Janeiro (TV Rio Sul)">
-            <h3>Rio de Janeiro (TV Rio Sul)</h3>
-            <p>Globo</p>
-            <a href="https://reidoscanais.me/embed/?id=globorj-tvriosul" target="_blank">Assistir</a>
-        </div>
+
+<div class="header">
+    <h1>Player de Transmissões</h1>
+</div>
+
+<div class="container">
+
+    <div class="player-area">
+        <div id="current-channel-name">Selecione um Canal para Iniciar a Transmissão</div>
+        <iframe 
+            id="main-player" 
+            class="player-iframe" 
+            src="" 
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture" 
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-fullscreen allow-forms" 
+        ></iframe>
+    </div>
+
+    <div class="channel-list-area">
+        <h2>Lista de Canais</h2>
+
+        <input type="text" id="channel-search" placeholder="Buscar canal...">
         
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/thumb/9/9e/Logotipo_da_TV_Globo.png/512px-Logotipo_da_TV_Globo.png" alt="São Paulo (Globo São Paulo)">
-            <h3>São Paulo (Globo São Paulo)</h3>
-            <p>Globo</p>
-            <a href="https://reidoscanais.me/embed/?id=globosp-globosaopaulo" target="_blank">Assistir</a>
+        <div id="channel-list-scroll">
+            <div id="channel-list">
+                
+                <div class="category-title">Canais Abertos / Locais</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/bandsp" onclick="loadChannel(this)">Band SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globomg" onclick="loadChannel(this)">Globo MG</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globorj" onclick="loadChannel(this)">Globo RJ</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globors" onclick="loadChannel(this)">Globo RS</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globosp" onclick="loadChannel(this)">Globo SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordmg" onclick="loadChannel(this)">Record MG</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordrj" onclick="loadChannel(this)">Record RJ</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordsp" onclick="loadChannel(this)">Record SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/redetv" onclick="loadChannel(this)">RedeTV!</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sbtsp" onclick="loadChannel(this)">SBT SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tvcultura" onclick="loadChannel(this)">TV Cultura</button>
+
+                <div class="category-title">Esportes</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/bandsports" onclick="loadChannel(this)">Band Sports</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cazetv" onclick="loadChannel(this)">Caze TV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/combate" onclick="loadChannel(this)">Combate</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/dazn" onclick="loadChannel(this)">DAZN</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn" onclick="loadChannel(this)">ESPN</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn2" onclick="loadChannel(this)">ESPN 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn3" onclick="loadChannel(this)">ESPN 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn4" onclick="loadChannel(this)">ESPN 4</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn5" onclick="loadChannel(this)">ESPN 5</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn6" onclick="loadChannel(this)">ESPN 6</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nossofutebol" onclick="loadChannel(this)">Nosso Futebol</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nsports" onclick="loadChannel(this)">NSports</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiereclubes" onclick="loadChannel(this)">Premiere Clubes</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere2" onclick="loadChannel(this)">Premiere 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere3" onclick="loadChannel(this)">Premiere 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere4" onclick="loadChannel(this)">Premiere 4</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere5" onclick="loadChannel(this)">Premiere 5</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere6" onclick="loadChannel(this)">Premiere 6</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere7" onclick="loadChannel(this)">Premiere 7</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere8" onclick="loadChannel(this)">Premiere 8</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sportv" onclick="loadChannel(this)">SporTV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sportv2" onclick="loadChannel(this)">SporTV 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sportv3" onclick="loadChannel(this)">SporTV 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/ufcfightpass" onclick="loadChannel(this)">UFC Fight Pass</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/xsports" onclick="loadChannel(this)">X-Sports</button>
+
+                <div class="category-title">Filmes e Séries</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/amazonprimevideo" onclick="loadChannel(this)">Amazon Prime Video</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/aee" onclick="loadChannel(this)">A&E</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/amc" onclick="loadChannel(this)">AMC</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/axn" onclick="loadChannel(this)">AXN</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cinemax" onclick="loadChannel(this)">Cinemax</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/disneyplus" onclick="loadChannel(this)">Disney Plus</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbo" onclick="loadChannel(this)">HBO</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbo2" onclick="loadChannel(this)">HBO 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbofamily" onclick="loadChannel(this)">HBO Family</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbomundi" onclick="loadChannel(this)">HBO Mundi</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hboplus" onclick="loadChannel(this)">HBO Plus</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbopop" onclick="loadChannel(this)">HBO Pop</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbosignature" onclick="loadChannel(this)">HBO Signature</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hboxtreme" onclick="loadChannel(this)">HBO Xtreme</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/max" onclick="loadChannel(this)">Max</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/megapix" onclick="loadChannel(this)">Megapix</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/paramountnetwork" onclick="loadChannel(this)">Paramount Network</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/paramountplus" onclick="loadChannel(this)">Paramount Plus</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sonychannel" onclick="loadChannel(this)">Sony Channel</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/space" onclick="loadChannel(this)">Space</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/studiouniversal" onclick="loadChannel(this)">Studio Universal</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcaction" onclick="loadChannel(this)">Telecine Action</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tccult" onclick="loadChannel(this)">Telecine Cult</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcfun" onclick="loadChannel(this)">Telecine Fun</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcpipoca" onclick="loadChannel(this)">Telecine Pipoca</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcpremium" onclick="loadChannel(this)">Telecine Premium</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tctouch" onclick="loadChannel(this)">Telecine Touch</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tnt" onclick="loadChannel(this)">TNT</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tntnovelas" onclick="loadChannel(this)">TNT Novelas</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tntseries" onclick="loadChannel(this)">TNT Series</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/universaltv" onclick="loadChannel(this)">Universal TV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/warner" onclick="loadChannel(this)">Warner</button>
+                
+                <div class="category-title">Documentários e Variedades</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/adultswim" onclick="loadChannel(this)">Adult Swim</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/animalplanet" onclick="loadChannel(this)">Animal Planet</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/canaloff" onclick="loadChannel(this)">Canal Off</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/comedycentral" onclick="loadChannel(this)">Comedy Central</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoverychannel" onclick="loadChannel(this)">Discovery Channel</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryhh" onclick="loadChannel(this)">Discovery H&H</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryid" onclick="loadChannel(this)">Discovery ID</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryscience" onclick="loadChannel(this)">Discovery Science</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoverytheater" onclick="loadChannel(this)">Discovery Theater</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryturbo" onclick="loadChannel(this)">Discovery Turbo</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryworld" onclick="loadChannel(this)">Discovery World</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/foodnetwork" onclick="loadChannel(this)">Food Network</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/gnt" onclick="loadChannel(this)">GNT</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hgtv" onclick="loadChannel(this)">HGTV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/history" onclick="loadChannel(this)">History</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/history2" onclick="loadChannel(this)">History 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/mtv" onclick="loadChannel(this)">MTV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/multishow" onclick="loadChannel(this)">Multishow</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda01" onclick="loadChannel(this)">A Fazenda 1</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda02" onclick="loadChannel(this)">A Fazenda 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda03" onclick="loadChannel(this)">A Fazenda 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda04" onclick="loadChannel(this)">A Fazenda 4</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda05" onclick="loadChannel(this)">A Fazenda 5</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda06" onclick="loadChannel(this)">A Fazenda 6</button>
+
+                <div class="category-title">Notícias</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/bandnews" onclick="loadChannel(this)">Band News</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cnnbrasil" onclick="loadChannel(this)">CNN Brasil</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globonews" onclick="loadChannel(this)">GloboNews</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/jovempannews" onclick="loadChannel(this)">Jovem Pan News</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordnews" onclick="loadChannel(this)">Record News</button>
+
+                <div class="category-title">Infantil</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cartoonito" onclick="loadChannel(this)">Cartoonito</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cartoonnetwork" onclick="loadChannel(this)">Cartoon Network</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoverykids" onclick="loadChannel(this)">Discovery Kids</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/dreamworks" onclick="loadChannel(this)">DreamWorks</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/gloob" onclick="loadChannel(this)">Gloob</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/gloobinho" onclick="loadChannel(this)">Gloobinho</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nickelodeon" onclick="loadChannel(this)">Nickelodeon</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nickjr" onclick="loadChannel(this)">Nick Jr</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tooncast" onclick="loadChannel(this)">Tooncast</button>
+            </div>
         </div>
-    </div></div><div class="category" id="Canais Abertos"><h2>Canais Abertos</h2><div class="container">
-        <div class="card">
-            <img src="https://i.imgur.com/tc1ALuu.png" alt="SBT">
-            <h3>SBT</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=sbt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/SOfcdFf.png" alt="Band">
-            <h3>Band</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=band" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/sz9gTTr.png" alt="Record SP">
-            <h3>Record SP</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=recordsp" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/ZJgD38F.png" alt="Rede TV!">
-            <h3>Rede TV!</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=redetv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/6ZNP8gs.png" alt="TV Diario">
-            <h3>TV Diario</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=tvdiario" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/hcApLfE.png" alt="TV Cultura">
-            <h3>TV Cultura</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=tvcultura" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/TV_Brasil_logo_2019.svg/512px-TV_Brasil_logo_2019.svg.png" alt="TV Brasil">
-            <h3>TV Brasil</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=tvbrasil" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/0sksWse.png" alt="TV Gazeta">
-            <h3>TV Gazeta</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=gazeta" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Canal_Futura.png/512px-Canal_Futura.png" alt="Futura">
-            <h3>Futura</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=futura" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/pVM5MhS.png" alt="Canal do Boi">
-            <h3>Canal do Boi</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=canaldoboi" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/aNkP7Zd.png" alt=" AgroBrasil TV">
-            <h3> AgroBrasil TV</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=agrobrasil" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/exdDHml.png" alt="Canal Rural">
-            <h3>Canal Rural</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=novotempo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/mP1qfp2.png" alt="Rede Vida">
-            <h3>Rede Vida</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=redevida" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/iuoXchN.png" alt="TV Pai Eterno">
-            <h3>TV Pai Eterno</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=tvpaieterno" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/IrYR7Kp.png" alt="TV Evangelizar">
-            <h3>TV Evangelizar</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=tvevangelizar" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/OaM9hkH.png" alt="TV Cancao Nova">
-            <h3>TV Cancao Nova</h3>
-            <p>Canais Abertos</p>
-            <a href="https://reidoscanais.me/embed/?id=cancaonova" target="_blank">Assistir</a>
-        </div>
+    </div>
+</div>
 
 
-    <div class="category" id="Entretenimento"><h2>Entretenimento</h2><div class="container">
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Discovery_H%26H_Logo_2022.webp/500px-Discovery_H%26H_Logo_2022.webp.png" alt="Discovery H&H">
-            <h3>Discovery H&H</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoveryheh" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Discovery_H%26H_Logo_2022.webp/500px-Discovery_H%26H_Logo_2022.webp.png" alt="Discovery H&H 2">
-            <h3>Discovery H&H 2</h3>
-            <p>Entretenimento</p>
-            <a href="https:////embedmax.site/tvl/discoveryheh.php" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/2019_Discovery_logo.svg/512px-2019_Discovery_logo.svg.png" alt="Discovery Channel">
-            <h3>Discovery Channel</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoverychannel" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/TLC_Logo.svg/512px-TLC_Logo.svg.png" alt="TLC">
-            <h3>TLC</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=tlc" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Discovery_science_new_logo_2017.png/512px-Discovery_science_new_logo_2017.png" alt="Discovery Science">
-            <h3>Discovery Science</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoveryscience" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png" alt="History">
-            <h3>History</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=history" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/History2_logo_%282022%29.svg/512px-History2_logo_%282022%29.svg.png" alt="History 2">
-            <h3>History 2</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=history2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Adult_Swim_2003_logo.svg/512px-Adult_Swim_2003_logo.svg.png" alt="Adult Swim">
-            <h3>Adult Swim</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=adultswim" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png" alt="Cartoon Network">
-            <h3>Cartoon Network</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=cartoonnetwork" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/uVFgIr8.png" alt="Telecine Premium">
-            <h3>Telecine Premium</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=telecinepremium" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/hW9JYXr.png" alt="Telecine Pipoca">
-            <h3>Telecine Pipoca</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=telecinepipoca" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/BHYWG0h.png" alt="Telecine Action">
-            <h3>Telecine Action</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=telecineaction" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/Nky0hRo.png" alt="Telecine Touch">
-            <h3>Telecine Touch</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=telecinetouch" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/MO2Ynki.png" alt="Telecine Fun">
-            <h3>Telecine Fun</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=telecinefun" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/6GuHXnr.png" alt="Telecine Cult">
-            <h3>Telecine Cult</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=telecinecult" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png" alt="HBO">
-            <h3>HBO</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hbo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/HBO2_logo.svg/512px-HBO2_logo.svg.png" alt="HBO 2">
-            <h3>HBO 2</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hbo2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Logohboplus2019.svg/512px-Logohboplus2019.svg.png" alt="HBO Plus">
-            <h3>HBO Plus</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hboplus" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/HBO_Family.svg/512px-HBO_Family.svg.png" alt="HBO Family">
-            <h3>HBO Family</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hbofamily" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/HBO_Signature.svg/512px-HBO_Signature.svg.png" alt="HBO Signature">
-            <h3>HBO Signature</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hbosignature" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/HBO_Xtreme.svg/512px-HBO_Xtreme.svg.png" alt="HBO Xtreme">
-            <h3>HBO Xtreme</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hboxtreme" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/Yb3oUls.png" alt="Discovery World">
-            <h3>Discovery World</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoveryworld" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/WuOhLl4.png" alt="Discovery Turbo">
-            <h3>Discovery Turbo</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoveryturbo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/InvestigationDiscoveryLogo2020.svg/langfr-512px-InvestigationDiscoveryLogo2020.svg.png" alt="Discovery ID">
-            <h3>Discovery ID</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoveryid" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/C0VEHXU.png" alt="Discovery Kids">
-            <h3>Discovery Kids</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoverykids" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/T07gvEb.png" alt="Discovery Theater">
-            <h3>Discovery Theater</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=discoverytheater" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Comedy_Central_2018.svg/512px-Comedy_Central_2018.svg.png" alt="Comedy Central">
-            <h3>Comedy Central</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=comedycentral" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/XA3zxEE.png" alt="TNT Sports">
-            <h3>TNT Sports</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=tntsports" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/MTV_2021_%28brand_version%29.svg/512px-MTV_2021_%28brand_version%29.svg.png" alt="MTV">
-            <h3>MTV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=mtv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/3UByLqb.png" alt="MTV Live">
-            <h3>MTV Live</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=mtvlive" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Nick_Jr._logo_2009.svg/512px-Nick_Jr._logo_2009.svg.png" alt="Nick Jr">
-            <h3>Nick Jr</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=nickjr" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_Lifetime_2020.svg/512px-Logo_Lifetime_2020.svg.png" alt="Lifetime">
-            <h3>Lifetime</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=lifetime" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/sFcOZeo.png" alt="Agro+">
-            <h3>Agro+</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=agromais" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/Ivnk7A6.png" alt="Arte1">
-            <h3>Arte1</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=arte1" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/wnYsE3O.png" alt="Terra Viva">
-            <h3>Terra Viva</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=terraviva" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png" alt="AMC">
-            <h3>AMC</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=amc" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png" alt="AXN">
-            <h3>AXN</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=axn" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/VUt1lmH.png" alt="BIS">
-            <h3>BIS</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=bis" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/CanalBrasil_logos_700px_0-03.png" alt="Canal Brasil">
-            <h3>Canal Brasil</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=canalbrasil" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/E%21_Logo_2012.svg/512px-E%21_Logo_2012.svg.png" alt="E!">
-            <h3>E!</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=e" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png" alt="FX">
-            <h3>FX</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=fx" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/N1BUULh.png" alt="Gloob">
-            <h3>Gloob</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=gloob" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/UWkHErt.png" alt="Gloobinho">
-            <h3>Gloobinho</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=gloobinho" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/XymcvMy.png" alt="GNT">
-            <h3>GNT</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=gnt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/qTYv5jt.png" alt="Megapix">
-            <h3>Megapix</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=megapix" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Logotipo_do_Modo_Viagem.svg" alt="Modo Viagem">
-            <h3>Modo Viagem</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=modoviagem" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/bqVg8nT.png" alt="Multishow">
-            <h3>Multishow</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=multishow" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/1biaLgJ.png" alt="Canal Off">
-            <h3>Canal Off</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=canaloff" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/StudioUniversal2016.png/512px-StudioUniversal2016.png" alt="Studio Universal">
-            <h3>Studio Universal</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=studiouniversal" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/4fMWhUE.png" alt="SyFy">
-            <h3>SyFy</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=syfy" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/Jt0B1Ac.png" alt="Universal TV">
-            <h3>Universal TV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=universaltv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Cinemax_%28Yellow%29.svg/512px-Cinemax_%28Yellow%29.svg.png" alt="Cinemax">
-            <h3>Cinemax</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=cinemax" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/CinecanalLA.png/512px-CinecanalLA.png" alt="Cinecanal">
-            <h3>Cinecanal</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=cinecanal" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Paramount_Network.svg/512px-Paramount_Network.svg.png" alt="Paramount Network">
-            <h3>Paramount Network</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountnetwork" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png" alt="Animal Planet">
-            <h3>Animal Planet</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=animalplanet" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Disney_Channel_logo_%282014%29.svg/512px-Disney_Channel_logo_%282014%29.svg.png" alt="Disney Channel">
-            <h3>Disney Channel</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=disneychannel" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Natgeologo.svg/512px-Natgeologo.svg.png" alt="National Geographic">
-            <h3>National Geographic</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=nationalgeographic" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/512px-Nickelodeon_2009_logo.svg.png" alt="Nickelodeon">
-            <h3>Nickelodeon</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=nickelodeon" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png" alt="Sony Channel">
-            <h3>Sony Channel</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=sonychannel" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Sony_Movies_Logo.svg/512px-Sony_Movies_Logo.svg.png" alt="Sony Movies">
-            <h3>Sony Movies</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=sonymovies" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png" alt="Space">
-            <h3>Space</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=space" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Star_Channel_2020.svg/512px-Star_Channel_2020.svg.png" alt="Star Channel">
-            <h3>Star Channel</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=starchannel" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/6l7us9Y.png" alt="Food Network">
-            <h3>Food Network</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=foodnetwork" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018LA.png/512px-Warner2018LA.png" alt="Warner TV">
-            <h3>Warner TV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=warnertv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/TruTV_2014.svg/512px-TruTV_2014.svg.png" alt="TruTV">
-            <h3>TruTV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=trutv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Canal_Viva_2018_wordmark.svg/512px-Canal_Viva_2018_wordmark.svg.png" alt="Viva">
-            <h3>Viva</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=viva" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/A%26E_Network_logo.svg/512px-A%26E_Network_logo.svg.png" alt="A&E">
-            <h3>A&E</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=aee" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png" alt="TNT">
-            <h3>TNT</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=tnt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.ibb.co/2nVmDJC/transferir.png" alt="Empreender">
-            <h3>Empreender</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=empreender" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/9/98/Saborearte.png" alt="Sabor & Arte">
-            <h3>Sabor & Arte</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=saborearte" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/1/1e/Logotipo_da_TV_Aparecida.png" alt="Aparecida">
-            <h3>Aparecida</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=aparecida" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/TV_R%C3%A1-Tim-Bum.png" alt="Rá-Tim-Bum">
-            <h3>Rá-Tim-Bum</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=ratimbum" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Logo_TNT_Novelas.png" alt="TNT Novelas">
-            <h3>TNT Novelas</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=tntnovelas" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://bravi.tv/wp-content/uploads/2019/09/Logo-Fish-TV-versao-mono-principal-1-1-768x219.png" alt="Fish TV">
-            <h3>Fish TV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=fishtv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Cartoonito_-_Logo_2021.svg/512px-Cartoonito_-_Logo_2021.svg.png" alt=" Cartoonito">
-            <h3> Cartoonito</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=cartoonito" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/cZWKyuM.png" alt="Fashion TV">
-            <h3>Fashion TV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=fashiontv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/Rwrh0zU.png" alt="Curta!">
-            <h3>Curta!</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=curta" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/HGTV_US_Logo_2015.svg/512px-HGTV_US_Logo_2015.svg.png" alt="HGTV">
-            <h3>HGTV</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=hgtv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/me622pa.png" alt="WooHoo">
-            <h3>WooHoo</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=woohoo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/ciTJrnl.png" alt="ZooMoo">
-            <h3>ZooMoo</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=zoomoo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/CDPCF2X.png" alt="Music Box Brazil">
-            <h3>Music Box Brazil</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=musicboxbrasil" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/MTV_00s_remaster.png" alt="MTV 00s">
-            <h3>MTV 00s</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=mtvs_00" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/2kHUsl7.png" alt=" Film & Arts Brazil">
-            <h3> Film & Arts Brazil</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=filmearts" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/BMqSDNn.png" alt="Prime Box Brazil">
-            <h3>Prime Box Brazil</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=primeboxbrazil" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/mttSwgO.png" alt="Rede Gospel">
-            <h3>Rede Gospel</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=redegospel" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/d/d6/Logo_BPL.png" alt="Brasil Paralelo">
-            <h3>Brasil Paralelo</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=brasilparalelo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://canalusa.com.br/img/logorojo.png" alt="USA">
-            <h3>USA</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=usa" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/UUxM3yD.png" alt="TCM">
-            <h3>TCM</h3>
-            <p>Entretenimento</p>
-            <a href="https://reidoscanais.me/embed/?id=tcm" target="_blank">Assistir</a>
-        </div>
-        
-        </div></div><div class="category" id="Noticias"><h2>Noticias</h2><div class="container">
-        <div class="card">
-            <img src="https://i.imgur.com/3yZyaCm.png" alt="Globo News">
-            <h3>Globo News</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=globonews" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/CNN_Brasil.svg/512px-CNN_Brasil.svg.png" alt="CNN Brasil">
-            <h3>CNN Brasil</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=cnnbrasil" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/3YlJsCL.png" alt="Band News">
-            <h3>Band News</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=bandnews" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Jovem_Pan_logo_2018.svg/512px-Jovem_Pan_logo_2018.svg.png" alt="JP News">
-            <h3>JP News</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=jpnews" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/HZDRG0K.png" alt="Record News">
-            <h3>Record News</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=recordnews" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/05S3yYZ.png" alt="CNN International">
-            <h3>CNN International</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=cnninternational" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/duy6waL.png" alt="TV Senado">
-            <h3>TV Senado</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=tvsenado" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/Sdou1Ab.png" alt="TV Camara">
-            <h3>TV Camara</h3>
-            <p>Noticias</p>
-            <a href="https://reidoscanais.me/embed/?id=tvcamara" target="_blank">Assistir</a>
-        </div>
-        </div></div><div class="category" id="Esportes"><h2>Esportes</h2><div class="container">
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg" alt="Max">
-            <h3>Max</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=max" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg" alt="Max 2">
-            <h3>Max 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=max2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Max_logo.svg" alt="Max 3">
-            <h3>Max 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=max3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" alt="ESPN">
-            <h3>ESPN</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=espn" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" alt="ESPN 2">
-            <h3>ESPN 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=espn2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" alt="ESPN 3">
-            <h3>ESPN 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=espn3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" alt="ESPN 4">
-            <h3>ESPN 4</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=espn4" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" alt="ESPN 5">
-            <h3>ESPN 5</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=espn5" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png" alt="ESPN 6">
-            <h3>ESPN 6</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=espn6" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv">
-            <h3>Sportv</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv 2">
-            <h3>Sportv 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv 3">
-            <h3>Sportv 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv 4">
-            <h3>Sportv 4</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv4" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv Mosaico">
-            <h3>Sportv Mosaico</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportvmosaico" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv (Alternativo)">
-            <h3>Sportv (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportvalternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv 2 (Alternativo)">
-            <h3>Sportv 2 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv2alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv 3 (Alternativo)">
-            <h3>Sportv 3 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv3alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv 4 (Alternativo)">
-            <h3>Sportv 4 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportv4alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/eHJ8Vm3.png" alt="Sportv Mosaico (Alternativo)">
-            <h3>Sportv Mosaico (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sportvmosaicoalternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere Clubes">
-            <h3>Premiere Clubes</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiereclubes" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 2">
-            <h3>Premiere 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 3">
-            <h3>Premiere 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 4">
-            <h3>Premiere 4</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere4" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 5">
-            <h3>Premiere 5</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere5" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 6">
-            <h3>Premiere 6</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere6" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 7">
-            <h3>Premiere 7</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere7" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 8">
-            <h3>Premiere 8</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere8" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere Clubes (Alternativo)">
-            <h3>Premiere Clubes (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiereclubesalternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 2 (Alternativo)">
-            <h3>Premiere 2 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere2alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 3 (Alternativo)">
-            <h3>Premiere 3 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere3alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 4 (Alternativo)">
-            <h3>Premiere 4 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere4alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 5 (Alternativo)">
-            <h3>Premiere 5 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere5alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 6 (Alternativo)">
-            <h3>Premiere 6 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere6alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 7 (Alternativo)">
-            <h3>Premiere 7 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere7alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/pt/a/a2/Logo_Premiere_FC_2018.png" alt="Premiere 8 (Alternativo)">
-            <h3>Premiere 8 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=premiere8alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+">
-            <h3>Paramount+</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ 2">
-            <h3>Paramount+ 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ 3">
-            <h3>Paramount+ 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ 4">
-            <h3>Paramount+ 4</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus4" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ (Alternativo)">
-            <h3>Paramount+ (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplusalternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ 2 (Alternativo)">
-            <h3>Paramount+ 2 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus2alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ 3 (Alternativo)">
-            <h3>Paramount+ 3 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus3alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://logodownload.org/wp-content/uploads/2021/03/paramount-plus-logo-0.png" alt="Paramount+ 4 (Alternativo)">
-            <h3>Paramount+ 4 (Alternativo)</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=paramountplus4alternativo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/ZPYK5jr.png" alt="Combate">
-            <h3>Combate</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=combate" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://raichu-uploads.s3.amazonaws.com/logo_ufc-fight-pass_J5LrAt.png" alt="UFC Fight Pass">
-            <h3>UFC Fight Pass</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=ufcfightpass" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/VbPBoYF.png" alt="Fox Sports 2">
-            <h3>Fox Sports 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=foxsports2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/EuPvzJe.png" alt="Band Sports">
-            <h3>Band Sports</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=bandsports" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.pinimg.com/originals/fe/1a/e9/fe1ae9abc45d5d2c7f6cf83e0c76ac7b.webp" alt="Nosso Futebol">
-            <h3>Nosso Futebol</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=nossofutebol" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/STN37zd.png" alt="Eleven 1 Portugal">
-            <h3>Eleven 1 Portugal</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=elevensports_pt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/bGRgFwo.png" alt="Eleven 2 Portugal">
-            <h3>Eleven 2 Portugal</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=elevensports2_pt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/lrcWrFs.png" alt="Eleven 3 Portugal">
-            <h3>Eleven 3 Portugal</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=elevensports3_pt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/OUGHmuH.png" alt="Eleven 4 Portugal">
-            <h3>Eleven 4 Portugal</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=elevensports4_pt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/rw8Qr1l.png" alt="Eleven 5 Portugal">
-            <h3>Eleven 5 Portugal</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=elevensports5_pt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.imgur.com/0dAM5uT.png" alt="Eleven 6 Portugal">
-            <h3>Eleven 6 Portugal</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=elevensports6_pt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_SportTV.svg" alt="Sport TV PT">
-            <h3>Sport TV PT</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sporttvpt" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_SportTV.svg" alt="Sport TV PT 2">
-            <h3>Sport TV PT 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sporttvpt2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_SportTV.svg" alt="Sport TV PT 3">
-            <h3>Sport TV PT 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sporttvpt3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_SportTV.svg" alt="Sport TV PT 4">
-            <h3>Sport TV PT 4</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sporttvpt4" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_SportTV.svg" alt="Sport TV PT 5">
-            <h3>Sport TV PT 5</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sporttvpt5" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/Logo_SportTV.svg" alt="Sport TV PT 6">
-            <h3>Sport TV PT 6</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=sporttvpt6" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video">
-            <h3>Prime Video</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 2">
-            <h3>Prime Video 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo2" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 3">
-            <h3>Prime Video 3</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo3" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 4">
-            <h3>Prime Video 4</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo4" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 5">
-            <h3>Prime Video 5</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo5" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 6">
-            <h3>Prime Video 6</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo6" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 7">
-            <h3>Prime Video 7</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo7" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg" alt="Prime Video 8">
-            <h3>Prime Video 8</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=primevideo8" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.ibb.co/JcnN7Xj/Perfil-casimito.webp" alt="CazéTV">
-            <h3>CazéTV</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=cazetv" target="_blank">Assistir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://i.ibb.co/JcnN7Xj/Perfil-casimito.webp" alt="CazéTV 2">
-            <h3>CazéTV 2</h3>
-            <p>Esportes</p>
-            <a href="https://reidoscanais.me/embed/?id=cazetv2" target="_blank">Assistir</a>
-        </div>
-        </div><div class="category" id="Radio"><h2>Radio</h2><div class="container">
-        <div class="card">
-            <img src="https://www.radiopositivafm.com.br/storage/img/layouts/1708724399_29787425.png" alt="Radio Positiva FM">
-            <h3>Positiva FM</h3>
-            <p>Radio</p>
-            <a href="https://radiopositiva.github.io/fm/" target="_blank">Ouvir</a>
-        </div>
-        
-        <div class="card">
-            <img src="https://costazul.fm/wp-content/uploads/2021/04/logotipo-costaazul.png" alt="Costazul">
-            <h3>Costazul FM</h3>
-            <p>Radio</p>
-            <a href="https://www.radios.com.br/aovivo/radio-costazul-931-fm/12223" target="_blank">Ouvir</a>
-        </div>
-        
-        </div>
-    <iframe data-aa='2366421' src='//ad.a-ads.com/2366421?size=320x50' style='width:320px; height:50px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
+<script>
+    const player = document.getElementById('main-player');
+    const channelNameDisplay = document.getElementById('current-channel-name');
+    const buttons = document.querySelectorAll('.channel-button');
+    const playerArea = document.querySelector('.player-area'); 
+    const channelSearch = document.getElementById('channel-search'); // Referência para a barra de busca
+    const channelList = document.getElementById('channel-list'); // Referência para a div da lista de canais
+
+    // Tenta carregar o primeiro canal da lista automaticamente
+    window.onload = function() {
+        if (buttons.length > 0) {
+            loadChannel(buttons[0]);
+        }
+    }
+
+    function loadChannel(button) {
+        // 1. Obter a URL base e o nome do canal
+        const rawUrl = button.getAttribute('data-url');
+        let name = button.textContent.trim();
+        
+        // 2. Adicionar parâmetros de Autoplay E Mute (Tentativa de inicialização automática)
+        const separator = rawUrl.includes('?') ? '&' : '?';
+        const finalUrl = rawUrl + separator + 'autoplay=1&muted=1';
+        
+        // 3. Atualizar o iframe do player
+        player.src = finalUrl;
+
+        // 4. Atualizar o nome exibido
+        channelNameDisplay.textContent = '▶️ ' + name;
+
+        // 5. Atualizar a classe 'active' para destacar o botão selecionado
+        buttons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+    }
+
+    // Função de Busca (Filtro)
+    channelSearch.addEventListener('keyup', function() {
+        const filter = channelSearch.value.toUpperCase();
+        const allItems = channelList.querySelectorAll('.channel-button, .category-title');
+        
+        allItems.forEach(item => {
+            if (item.classList.contains('channel-button')) {
+                // Lógica de filtro para botões
+                const text = item.textContent || item.innerText;
+                if (text.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            } else if (item.classList.contains('category-title')) {
+                // Lógica para esconder títulos de categoria se não houver canais visíveis abaixo
+                let nextSibling = item.nextElementSibling;
+                let hasVisibleButton = false;
+                
+                // Percorre os próximos elementos até encontrar outro título ou o fim
+                while (nextSibling && !nextSibling.classList.contains('category-title')) {
+                    if (nextSibling.classList.contains('channel-button') && nextSibling.style.display !== "none") {
+                        // Verifica se o canal está visível ou se deveria estar (após o filtro)
+                        const buttonText = nextSibling.textContent || nextSibling.innerText;
+                        if (buttonText.toUpperCase().indexOf(filter) > -1) {
+                            hasVisibleButton = true;
+                            break;
+                        }
+                    }
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+
+                if (filter === '') {
+                    // Se não houver filtro, mostra todos os títulos
+                    item.style.display = "";
+                } else if (hasVisibleButton) {
+                    // Se houver um canal visível na busca nessa categoria, mostra o título
+                    item.style.display = "";
+                } else {
+                    // Se não houver canais visíveis após o filtro, esconde o título
+                    item.style.display = "none";
+                }
+            }
+        });
+    });
+
+    // --- Lógica para Bloqueio de Orientação na Tela Cheia (Permanece a mesma) ---
+
+    // Função para tentar forçar a orientação paisagem (landscape)
+    function lockOrientationToLandscape() {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape')
+                .then(() => {
+                    console.log("Orientação bloqueada para paisagem.");
+                })
+                .catch((error) => {
+                    console.warn("Não foi possível bloquear a orientação (pode requerer a tela cheia primeiro):", error);
+                });
+        } else {
+            console.log("A API de Bloqueio de Orientação de Tela não é suportada por este navegador.");
+        }
+    }
+
+    // Função para liberar o bloqueio quando sair da tela cheia
+    function unlockOrientation() {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+            console.log("Orientação liberada.");
+        }
+    }
+
+    // Adiciona o listener para detectar a entrada e saída da tela cheia
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === player || document.fullscreenElement === playerArea) {
+            lockOrientationToLandscape();
+        } else {
+            unlockOrientation();
+        }
+    });
+    
+    // Adiciona suporte a prefixos para navegadores mais antigos/específicos
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (document.webkitFullscreenElement === player || document.webkitFullscreenElement === playerArea) {
+            lockOrientationToLandscape();
+        } else {
+            unlockOrientation();
+        }
+    });
+
+    document.addEventListener('mozfullscreenchange', () => {
+        if (document.mozFullScreenElement === player || document.mozFullScreenElement === playerArea) {
+            lockOrientationToLandscape();
+        } else {
+            unlockOrientation();
+        }
+    });
+</script>
+<iframe data-aa='2366421' src='//ad.a-ads.com/2366421?size=320x50' style='width:320px; height:50px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
+
 
 </body>
 </html>
