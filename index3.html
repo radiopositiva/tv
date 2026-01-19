@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player de Canais</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        .header {
+            background-color: #2c3e50;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #e74c3c;
+        }
+        .header h1 {
+            margin: 0;
+            color: #ecf0f1;
+        }
+        .container {
+            display: flex;
+            max-width: 1500px;
+            margin: 20px auto;
+            padding: 10px;
+            gap: 20px;
+        }
+        .player-area {
+            flex: 3;
+            min-width: 0;
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
+        }
+        .channel-list-area {
+            flex: 1;
+            max-width: 350px;
+            background-color: #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            display: flex; /* Adicionado */
+            flex-direction: column; /* Adicionado */
+            max-height: 85vh;
+            border: 1px solid #333;
+        }
+        .channel-list-area h2 {
+            color: #e74c3c;
+            margin-top: 0;
+            border-bottom: 2px solid #34495e;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Estilo para a barra de busca */
+        #channel-search {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #34495e;
+            border-radius: 5px;
+            box-sizing: border-box;
+            background-color: #3e566e;
+            color: #f0f0f0;
+            font-size: 16px;
+        }
+        #channel-search::placeholder {
+            color: #bdc3c7;
+        }
+
+        /* Área de Rolagem para a Lista */
+        #channel-list-scroll {
+            overflow-y: auto;
+            flex-grow: 1; /* Permite que a lista use o espaço restante */
+            padding-right: 5px; /* Espaço para a barra de rolagem */
+        }
+        
+        /* Estilo para a Categoria */
+        .category-title {
+            color: #f1c40f;
+            font-size: 1.1em;
+            margin: 15px 0 8px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #4e6377;
+            text-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+        }
+
+        .channel-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background-color: #34495e;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 5px;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .channel-button:hover {
+            background-color: #3e566e;
+        }
+        .channel-button.active {
+            background-color: #e74c3c;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        .player-iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+            border: none;
+        }
+        #current-channel-name {
+            padding: 15px;
+            background-color: #34495e;
+            margin: 0;
+            text-align: center;
+            font-size: 1.2em;
+            color: #f1c40f;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                margin: 10px;
+            }
+            .channel-list-area {
+                max-height: 40vh;
+                max-width: 100%;
+            }
+            .player-iframe {
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Player de Transmissões</h1>
+</div>
+
+<div class="container">
+
+    <div class="player-area">
+        <div id="current-channel-name">Selecione um Canal para Iniciar a Transmissão</div>
+        <iframe 
+            id="main-player" 
+            class="player-iframe" 
+            src="" 
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture" 
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-fullscreen allow-forms" 
+        ></iframe>
+    </div>
+
+    <div class="channel-list-area">
+        <h2>Lista de Canais</h2>
+
+        <input type="text" id="channel-search" placeholder="Buscar canal...">
+        
+        <div id="channel-list-scroll">
+            <div id="channel-list">
+                
+                <div class="category-title">Canais Abertos / Locais</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/bandsp" onclick="loadChannel(this)">Band SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globomg" onclick="loadChannel(this)">Globo MG</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globorj" onclick="loadChannel(this)">Globo RJ</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globors" onclick="loadChannel(this)">Globo RS</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globosp" onclick="loadChannel(this)">Globo SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordmg" onclick="loadChannel(this)">Record MG</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordrj" onclick="loadChannel(this)">Record RJ</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordsp" onclick="loadChannel(this)">Record SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/redetv" onclick="loadChannel(this)">RedeTV!</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sbtsp" onclick="loadChannel(this)">SBT SP</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tvcultura" onclick="loadChannel(this)">TV Cultura</button>
+
+                <div class="category-title">Esportes</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/bandsports" onclick="loadChannel(this)">Band Sports</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cazetv" onclick="loadChannel(this)">Caze TV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/combate" onclick="loadChannel(this)">Combate</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/dazn" onclick="loadChannel(this)">DAZN</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn" onclick="loadChannel(this)">ESPN</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn2" onclick="loadChannel(this)">ESPN 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn3" onclick="loadChannel(this)">ESPN 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn4" onclick="loadChannel(this)">ESPN 4</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn5" onclick="loadChannel(this)">ESPN 5</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/espn6" onclick="loadChannel(this)">ESPN 6</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nossofutebol" onclick="loadChannel(this)">Nosso Futebol</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nsports" onclick="loadChannel(this)">NSports</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiereclubes" onclick="loadChannel(this)">Premiere Clubes</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere2" onclick="loadChannel(this)">Premiere 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere3" onclick="loadChannel(this)">Premiere 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere4" onclick="loadChannel(this)">Premiere 4</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere5" onclick="loadChannel(this)">Premiere 5</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere6" onclick="loadChannel(this)">Premiere 6</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere7" onclick="loadChannel(this)">Premiere 7</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/premiere8" onclick="loadChannel(this)">Premiere 8</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sportv" onclick="loadChannel(this)">SporTV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sportv2" onclick="loadChannel(this)">SporTV 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sportv3" onclick="loadChannel(this)">SporTV 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/ufcfightpass" onclick="loadChannel(this)">UFC Fight Pass</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/xsports" onclick="loadChannel(this)">X-Sports</button>
+
+                <div class="category-title">Filmes e Séries</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/amazonprimevideo" onclick="loadChannel(this)">Amazon Prime Video</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/aee" onclick="loadChannel(this)">A&E</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/amc" onclick="loadChannel(this)">AMC</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/axn" onclick="loadChannel(this)">AXN</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cinemax" onclick="loadChannel(this)">Cinemax</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/disneyplus" onclick="loadChannel(this)">Disney Plus</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbo" onclick="loadChannel(this)">HBO</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbo2" onclick="loadChannel(this)">HBO 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbofamily" onclick="loadChannel(this)">HBO Family</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbomundi" onclick="loadChannel(this)">HBO Mundi</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hboplus" onclick="loadChannel(this)">HBO Plus</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbopop" onclick="loadChannel(this)">HBO Pop</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hbosignature" onclick="loadChannel(this)">HBO Signature</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hboxtreme" onclick="loadChannel(this)">HBO Xtreme</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/max" onclick="loadChannel(this)">Max</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/megapix" onclick="loadChannel(this)">Megapix</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/paramountnetwork" onclick="loadChannel(this)">Paramount Network</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/paramountplus" onclick="loadChannel(this)">Paramount Plus</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/sonychannel" onclick="loadChannel(this)">Sony Channel</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/space" onclick="loadChannel(this)">Space</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/studiouniversal" onclick="loadChannel(this)">Studio Universal</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcaction" onclick="loadChannel(this)">Telecine Action</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tccult" onclick="loadChannel(this)">Telecine Cult</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcfun" onclick="loadChannel(this)">Telecine Fun</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcpipoca" onclick="loadChannel(this)">Telecine Pipoca</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tcpremium" onclick="loadChannel(this)">Telecine Premium</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tctouch" onclick="loadChannel(this)">Telecine Touch</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tnt" onclick="loadChannel(this)">TNT</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tntnovelas" onclick="loadChannel(this)">TNT Novelas</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tntseries" onclick="loadChannel(this)">TNT Series</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/universaltv" onclick="loadChannel(this)">Universal TV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/warner" onclick="loadChannel(this)">Warner</button>
+                
+                <div class="category-title">Documentários e Variedades</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/adultswim" onclick="loadChannel(this)">Adult Swim</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/animalplanet" onclick="loadChannel(this)">Animal Planet</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/canaloff" onclick="loadChannel(this)">Canal Off</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/comedycentral" onclick="loadChannel(this)">Comedy Central</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoverychannel" onclick="loadChannel(this)">Discovery Channel</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryhh" onclick="loadChannel(this)">Discovery H&H</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryid" onclick="loadChannel(this)">Discovery ID</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryscience" onclick="loadChannel(this)">Discovery Science</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoverytheater" onclick="loadChannel(this)">Discovery Theater</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryturbo" onclick="loadChannel(this)">Discovery Turbo</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoveryworld" onclick="loadChannel(this)">Discovery World</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/foodnetwork" onclick="loadChannel(this)">Food Network</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/gnt" onclick="loadChannel(this)">GNT</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/hgtv" onclick="loadChannel(this)">HGTV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/history" onclick="loadChannel(this)">History</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/history2" onclick="loadChannel(this)">History 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/mtv" onclick="loadChannel(this)">MTV</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/multishow" onclick="loadChannel(this)">Multishow</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda01" onclick="loadChannel(this)">A Fazenda 1</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda02" onclick="loadChannel(this)">A Fazenda 2</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda03" onclick="loadChannel(this)">A Fazenda 3</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda04" onclick="loadChannel(this)">A Fazenda 4</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda05" onclick="loadChannel(this)">A Fazenda 5</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/afazenda06" onclick="loadChannel(this)">A Fazenda 6</button>
+
+                <div class="category-title">Notícias</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/bandnews" onclick="loadChannel(this)">Band News</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cnnbrasil" onclick="loadChannel(this)">CNN Brasil</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/globonews" onclick="loadChannel(this)">GloboNews</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/jovempannews" onclick="loadChannel(this)">Jovem Pan News</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/recordnews" onclick="loadChannel(this)">Record News</button>
+
+                <div class="category-title">Infantil</div>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cartoonito" onclick="loadChannel(this)">Cartoonito</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/cartoonnetwork" onclick="loadChannel(this)">Cartoon Network</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/discoverykids" onclick="loadChannel(this)">Discovery Kids</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/dreamworks" onclick="loadChannel(this)">DreamWorks</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/gloob" onclick="loadChannel(this)">Gloob</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/gloobinho" onclick="loadChannel(this)">Gloobinho</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nickelodeon" onclick="loadChannel(this)">Nickelodeon</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/nickjr" onclick="loadChannel(this)">Nick Jr</button>
+                <button class="channel-button" data-url="https://www1.embedtv.best/tooncast" onclick="loadChannel(this)">Tooncast</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const player = document.getElementById('main-player');
+    const channelNameDisplay = document.getElementById('current-channel-name');
+    const buttons = document.querySelectorAll('.channel-button');
+    const playerArea = document.querySelector('.player-area'); 
+    const channelSearch = document.getElementById('channel-search'); // Referência para a barra de busca
+    const channelList = document.getElementById('channel-list'); // Referência para a div da lista de canais
+
+    // Tenta carregar o primeiro canal da lista automaticamente
+    window.onload = function() {
+        if (buttons.length > 0) {
+            loadChannel(buttons[0]);
+        }
+    }
+
+    function loadChannel(button) {
+        // 1. Obter a URL base e o nome do canal
+        const rawUrl = button.getAttribute('data-url');
+        let name = button.textContent.trim();
+        
+        // 2. Adicionar parâmetros de Autoplay E Mute (Tentativa de inicialização automática)
+        const separator = rawUrl.includes('?') ? '&' : '?';
+        const finalUrl = rawUrl + separator + 'autoplay=1&muted=1';
+        
+        // 3. Atualizar o iframe do player
+        player.src = finalUrl;
+
+        // 4. Atualizar o nome exibido
+        channelNameDisplay.textContent = '▶️ ' + name;
+
+        // 5. Atualizar a classe 'active' para destacar o botão selecionado
+        buttons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+    }
+
+    // Função de Busca (Filtro)
+    channelSearch.addEventListener('keyup', function() {
+        const filter = channelSearch.value.toUpperCase();
+        const allItems = channelList.querySelectorAll('.channel-button, .category-title');
+        
+        allItems.forEach(item => {
+            if (item.classList.contains('channel-button')) {
+                // Lógica de filtro para botões
+                const text = item.textContent || item.innerText;
+                if (text.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            } else if (item.classList.contains('category-title')) {
+                // Lógica para esconder títulos de categoria se não houver canais visíveis abaixo
+                let nextSibling = item.nextElementSibling;
+                let hasVisibleButton = false;
+                
+                // Percorre os próximos elementos até encontrar outro título ou o fim
+                while (nextSibling && !nextSibling.classList.contains('category-title')) {
+                    if (nextSibling.classList.contains('channel-button') && nextSibling.style.display !== "none") {
+                        // Verifica se o canal está visível ou se deveria estar (após o filtro)
+                        const buttonText = nextSibling.textContent || nextSibling.innerText;
+                        if (buttonText.toUpperCase().indexOf(filter) > -1) {
+                            hasVisibleButton = true;
+                            break;
+                        }
+                    }
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+
+                if (filter === '') {
+                    // Se não houver filtro, mostra todos os títulos
+                    item.style.display = "";
+                } else if (hasVisibleButton) {
+                    // Se houver um canal visível na busca nessa categoria, mostra o título
+                    item.style.display = "";
+                } else {
+                    // Se não houver canais visíveis após o filtro, esconde o título
+                    item.style.display = "none";
+                }
+            }
+        });
+    });
+
+    // --- Lógica para Bloqueio de Orientação na Tela Cheia (Permanece a mesma) ---
+
+    // Função para tentar forçar a orientação paisagem (landscape)
+    function lockOrientationToLandscape() {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape')
+                .then(() => {
+                    console.log("Orientação bloqueada para paisagem.");
+                })
+                .catch((error) => {
+                    console.warn("Não foi possível bloquear a orientação (pode requerer a tela cheia primeiro):", error);
+                });
+        } else {
+            console.log("A API de Bloqueio de Orientação de Tela não é suportada por este navegador.");
+        }
+    }
+
+    // Função para liberar o bloqueio quando sair da tela cheia
+    function unlockOrientation() {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+            console.log("Orientação liberada.");
+        }
+    }
+
+    // Adiciona o listener para detectar a entrada e saída da tela cheia
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === player || document.fullscreenElement === playerArea) {
+            lockOrientationToLandscape();
+        } else {
+            unlockOrientation();
+        }
+    });
+    
+    // Adiciona suporte a prefixos para navegadores mais antigos/específicos
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (document.webkitFullscreenElement === player || document.webkitFullscreenElement === playerArea) {
+            lockOrientationToLandscape();
+        } else {
+            unlockOrientation();
+        }
+    });
+
+    document.addEventListener('mozfullscreenchange', () => {
+        if (document.mozFullScreenElement === player || document.mozFullScreenElement === playerArea) {
+            lockOrientationToLandscape();
+        } else {
+            unlockOrientation();
+        }
+    });
+</script>
+
+<iframe data-aa='2366421' src='//ad.a-ads.com/2366421?size=320x50' style='width:320px; height:50px; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe>
+
+</body>
+</html>
